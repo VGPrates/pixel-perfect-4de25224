@@ -14,16 +14,464 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      character_conditions: {
+        Row: {
+          applied_at: string
+          character_id: number
+          condition_id: number
+          duration: string
+          id: number
+        }
+        Insert: {
+          applied_at?: string
+          character_id: number
+          condition_id: number
+          duration?: string
+          id?: never
+        }
+        Update: {
+          applied_at?: string
+          character_id?: number
+          condition_id?: number
+          duration?: string
+          id?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_conditions_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_conditions_condition_id_fkey"
+            columns: ["condition_id"]
+            isOneToOne: false
+            referencedRelation: "conditions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      character_effects: {
+        Row: {
+          applied_at: string
+          character_id: number
+          duration: string
+          effect_id: number
+          id: number
+        }
+        Insert: {
+          applied_at?: string
+          character_id: number
+          duration?: string
+          effect_id: number
+          id?: never
+        }
+        Update: {
+          applied_at?: string
+          character_id?: number
+          duration?: string
+          effect_id?: number
+          id?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_effects_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_effects_effect_id_fkey"
+            columns: ["effect_id"]
+            isOneToOne: false
+            referencedRelation: "effects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      characters: {
+        Row: {
+          age: number
+          agility: number
+          backstory: string
+          class: string
+          created_at: string
+          created_by: string
+          hp: number
+          hp_max: number
+          id: number
+          intelligence: number
+          mana: number
+          mana_max: number
+          name: string
+          notes: string
+          presence: number
+          race: string
+          resistance: number
+          stamina: number
+          stamina_max: number
+          strength: number
+          unspent_points: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          age: number
+          agility?: number
+          backstory?: string
+          class: string
+          created_at?: string
+          created_by: string
+          hp?: number
+          hp_max?: number
+          id?: never
+          intelligence?: number
+          mana?: number
+          mana_max?: number
+          name: string
+          notes?: string
+          presence?: number
+          race: string
+          resistance?: number
+          stamina?: number
+          stamina_max?: number
+          strength?: number
+          unspent_points?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          age?: number
+          agility?: number
+          backstory?: string
+          class?: string
+          created_at?: string
+          created_by?: string
+          hp?: number
+          hp_max?: number
+          id?: never
+          intelligence?: number
+          mana?: number
+          mana_max?: number
+          name?: string
+          notes?: string
+          presence?: number
+          race?: string
+          resistance?: number
+          stamina?: number
+          stamina_max?: number
+          strength?: number
+          unspent_points?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      conditions: {
+        Row: {
+          color: string
+          created_at: string
+          description: string
+          effect: string
+          icon: string
+          id: number
+          modifiers: Json
+          name: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string
+          effect?: string
+          icon?: string
+          id?: never
+          modifiers?: Json
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string
+          effect?: string
+          icon?: string
+          id?: never
+          modifiers?: Json
+          name?: string
+        }
+        Relationships: []
+      }
+      dice_rolls: {
+        Row: {
+          character_id: number | null
+          created_at: string
+          id: number
+          roller_name: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          character_id?: number | null
+          created_at?: string
+          id?: never
+          roller_name: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          character_id?: number | null
+          created_at?: string
+          id?: never
+          roller_name?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dice_rolls_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      effects: {
+        Row: {
+          color: string
+          created_at: string
+          description: string
+          icon: string
+          id: number
+          kind: string
+          modifiers: Json
+          name: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: never
+          kind: string
+          modifiers?: Json
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: never
+          kind?: string
+          modifiers?: Json
+          name?: string
+        }
+        Relationships: []
+      }
+      equipment: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          effects: string
+          icon: string
+          id: number
+          modifiers: Json
+          name: string
+          rarity: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string
+          effects?: string
+          icon?: string
+          id?: never
+          modifiers?: Json
+          name: string
+          rarity?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          effects?: string
+          icon?: string
+          id?: never
+          modifiers?: Json
+          name?: string
+          rarity?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          character_id: number
+          created_at: string
+          description: string
+          equipment_id: number | null
+          equipped_slot: string | null
+          id: number
+          kind: string
+          name: string
+          quantity: number
+        }
+        Insert: {
+          character_id: number
+          created_at?: string
+          description?: string
+          equipment_id?: number | null
+          equipped_slot?: string | null
+          id?: never
+          kind: string
+          name: string
+          quantity?: number
+        }
+        Update: {
+          character_id?: number
+          created_at?: string
+          description?: string
+          equipment_id?: number | null
+          equipped_slot?: string | null
+          id?: never
+          kind?: string
+          name?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_view_character: { Args: { _cid: number }; Returns: boolean }
+      choose_role: {
+        Args: {
+          _character?: Json
+          _display_name: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: undefined
+      }
+      equip_item: {
+        Args: { _item_id: number; _slot: string }
+        Returns: undefined
+      }
+      gm_give_equipment: {
+        Args: { _character_id: number; _equipment_id: number }
+        Returns: undefined
+      }
+      gm_grant_points: {
+        Args: { _amount: number; _character_id: number }
+        Returns: undefined
+      }
+      gm_set_stats: {
+        Args: {
+          _agility: number
+          _character_id: number
+          _intelligence: number
+          _presence: number
+          _resistance: number
+          _strength: number
+          _unspent: number
+        }
+        Returns: undefined
+      }
+      gm_update_identity: {
+        Args: {
+          _age: number
+          _backstory: string
+          _character_id: number
+          _class: string
+          _name: string
+          _race: string
+        }
+        Returns: undefined
+      }
+      gm_update_vitals: {
+        Args: {
+          _character_id: number
+          _hp: number
+          _hp_max: number
+          _mana: number
+          _mana_max: number
+          _stamina: number
+          _stamina_max: number
+        }
+        Returns: undefined
+      }
+      is_gm: { Args: { _uid: string }; Returns: boolean }
+      owns_character: { Args: { _cid: number }; Returns: boolean }
+      roll_d20: { Args: never; Returns: Json }
+      spend_points: {
+        Args: { _alloc: Json; _character_id: number }
+        Returns: undefined
+      }
+      unequip_item: { Args: { _item_id: number }; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "gm" | "player"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +598,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["gm", "player"],
+    },
   },
 } as const
