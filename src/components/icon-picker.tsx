@@ -94,7 +94,10 @@ export function IconPicker({
     setDeletingKey(key);
     try {
       await deleteCustomIcon(key);
-      if (value === key) onChange(defaultCategory === "equipment" ? "sword" : defaultCategory === "effect" ? "sparkles" : "blood");
+      if (value === key) {
+        const remaining = icons.filter((icon) => icon.key !== key);
+        onChange(remaining[0]?.key ?? "");
+      }
       setPendingDelete(null);
       toast.success("Ícone removido.");
     } catch (error) {
