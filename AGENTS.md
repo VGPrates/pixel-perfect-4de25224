@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Auth: login/cadastro em `src/routes/login.tsx`; cada página (/painel, /mestre, /onboarding) redireciona para /login sem sessão. Dados do RPG via `src/lib/rpg/api.ts` direto no banco com RLS + funções RPC.
