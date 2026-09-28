@@ -203,6 +203,36 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_icons: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          id: number
+          key: string
+          label: string
+          url: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string
+          id?: never
+          key: string
+          label: string
+          url: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          id?: never
+          key?: string
+          label?: string
+          url?: string
+        }
+        Relationships: []
+      }
       dice_rolls: {
         Row: {
           character_id: number | null
