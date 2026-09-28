@@ -12,7 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { GameIcon, GAME_ICON_LABEL, GAME_ICON_NAMES } from "@/components/game-icon";
+import { GameIcon } from "@/components/game-icon";
+import { IconPicker } from "@/components/icon-picker";
+import type { IconCategory } from "@/lib/rpg/icons";
 import { ValueStepper } from "@/components/value-stepper";
 import { cn } from "@/lib/utils";
 
@@ -120,7 +122,7 @@ export function EquipmentLibrary() {
             <Label htmlFor="eq-name">Nome</Label>
             <Input id="eq-name" name="name" required maxLength={80} defaultValue={editing?.name} />
           </div>
-          <IconField initial={editing?.icon ?? "sword"} />
+          <IconField initial={editing?.icon ?? "sword"} category="equipment" />
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label htmlFor="eq-cat">Tipo / local</Label>
@@ -237,7 +239,10 @@ function EffectForm<T extends Effect | Condition>({
           <input id={`${kind}-color`} name="color" type="color" defaultValue={editing?.color ?? (isEffect ? "#7fa065" : "#d0564d")} className="h-11 w-full cursor-pointer rounded-md bg-elevated p-1 shadow-border" />
         </div>
       </div>
-      <IconField initial={editing?.icon ?? (isEffect ? "sparkles" : "blood")} />
+      <IconField
+        initial={editing?.icon ?? (isEffect ? "sparkles" : "blood")}
+        category={isEffect ? "effect" : "condition"}
+      />
       {isEffect ? (
         <div className="grid gap-1.5">
           <Label htmlFor="effect-kind">Tipo</Label>
