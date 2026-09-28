@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { getLibrary, getMyState } from "./api";
+import { fetchCustomIcons } from "./icons";
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
@@ -31,6 +32,11 @@ export function useRpgState(enabled = true) {
 
 export function useLibrary() {
   return useQuery({ queryKey: ["rpg-library"], queryFn: getLibrary });
+}
+
+/** Loads the GM's imported icons into the shared icon registry. */
+export function useCustomIcons() {
+  return useQuery({ queryKey: ["custom-icons"], queryFn: fetchCustomIcons });
 }
 
 /** Live sync: any change at the table refreshes everyone's view. */
