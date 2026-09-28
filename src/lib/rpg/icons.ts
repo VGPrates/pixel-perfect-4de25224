@@ -228,7 +228,7 @@ export async function normalizeIconFile(file: File): Promise<string> {
     let bottom = -1;
     for (let y = 0; y < sourceCanvas.height; y += 1) {
       for (let x = 0; x < sourceCanvas.width; x += 1) {
-        if (pixels[(y * sourceCanvas.width + x) * 4 + 3] > 12) {
+        if ((pixels[(y * sourceCanvas.width + x) * 4 + 3] ?? 0) > 12) {
           left = Math.min(left, x);
           top = Math.min(top, y);
           right = Math.max(right, x);
