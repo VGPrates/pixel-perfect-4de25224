@@ -1,0 +1,194 @@
+import { supabase } from "@/integrations/supabase/client";
+
+import sword from "@/assets/icons/sword.webp";
+import dagger from "@/assets/icons/dagger.webp";
+import axe from "@/assets/icons/axe.webp";
+import bow from "@/assets/icons/bow.webp";
+import shield from "@/assets/icons/shield.webp";
+import helmet from "@/assets/icons/helmet.webp";
+import armor from "@/assets/icons/armor.webp";
+import pants from "@/assets/icons/pants.webp";
+import boot from "@/assets/icons/boot.webp";
+import ring from "@/assets/icons/ring.webp";
+import potion from "@/assets/icons/potion.webp";
+import scroll from "@/assets/icons/scroll.webp";
+import bag from "@/assets/icons/bag.webp";
+import gem from "@/assets/icons/gem.webp";
+import muscle from "@/assets/icons/muscle.webp";
+import aegis from "@/assets/icons/aegis.webp";
+import sparkles from "@/assets/icons/sparkles.webp";
+import flame from "@/assets/icons/flame.webp";
+import frost from "@/assets/icons/frost.webp";
+import heart from "@/assets/icons/heart.webp";
+import droplet from "@/assets/icons/droplet.webp";
+import blood from "@/assets/icons/blood.webp";
+import bone from "@/assets/icons/bone.webp";
+import stun from "@/assets/icons/stun.webp";
+import poison from "@/assets/icons/poison.webp";
+import wilt from "@/assets/icons/wilt.webp";
+
+/**
+ * One painted icon set, split in three shelves so the picker never shows
+ * everything at once: gear, buffs/debuffs and conditions.
+ * Keys are stable — stored icon names keep working.
+ */
+export type IconCategory = "equipment" | "effect" | "condition";
+
+export const ICON_CATEGORIES: { key: IconCategory; label: string }[] = [
+  { key: "equipment", label: "Equipamentos" },
+  { key: "effect", label: "Buffs e Debuffs" },
+  { key: "condition", label: "Condições" },
+];
+
+export const ICON_CATEGORY_LABEL: Record<IconCategory, string> = {
+  equipment: "Equipamento",
+  effect: "Buff / Debuff",
+  condition: "Condição",
+};
+
+export type IconEntry = {
+  key: string;
+  label: string;
+  category: IconCategory;
+  src: string;
+  custom?: boolean;
+};
+
+export const BUILTIN_ICONS: IconEntry[] = [
+  { key: "sword", label: "Espada", category: "equipment", src: sword },
+  { key: "dagger", label: "Adaga", category: "equipment", src: dagger },
+  { key: "axe", label: "Machado", category: "equipment", src: axe },
+  { key: "bow", label: "Arco", category: "equipment", src: bow },
+  { key: "shield", label: "Escudo", category: "equipment", src: shield },
+  { key: "helmet", label: "Elmo", category: "equipment", src: helmet },
+  { key: "armor", label: "Armadura", category: "equipment", src: armor },
+  { key: "pants", label: "Grevas", category: "equipment", src: pants },
+  { key: "boot", label: "Bota", category: "equipment", src: boot },
+  { key: "ring", label: "Anel", category: "equipment", src: ring },
+  { key: "potion", label: "Poção", category: "equipment", src: potion },
+  { key: "scroll", label: "Pergaminho", category: "equipment", src: scroll },
+  { key: "bag", label: "Bolsa", category: "equipment", src: bag },
+  { key: "gem", label: "Gema", category: "equipment", src: gem },
+  { key: "muscle", label: "Vigor", category: "effect", src: muscle },
+  { key: "aegis", label: "Proteção", category: "effect", src: aegis },
+  { key: "sparkles", label: "Arcano", category: "effect", src: sparkles },
+  { key: "flame", label: "Chama", category: "effect", src: flame },
+  { key: "frost", label: "Gelo", category: "effect", src: frost },
+  { key: "heart", label: "Vida", category: "effect", src: heart },
+  { key: "droplet", label: "Gota", category: "effect", src: droplet },
+  { key: "blood", label: "Sangramento", category: "condition", src: blood },
+  { key: "bone", label: "Fratura", category: "condition", src: bone },
+  { key: "stun", label: "Atordoado", category: "condition", src: stun },
+  { key: "poison", label: "Veneno", category: "condition", src: poison },
+  { key: "wilt", label: "Definhar", category: "condition", src: wilt },
+];
+
+export const FALLBACK_ICON = sparkles;
+
+/* ---------- custom icons imported by the GM ---------- */
+
+let customIcons: IconEntry[] = [];
+const listeners = new Set<() => void>();
+
+export function getCustomIcons() {
+  return customIcons;
+}
+
+export function subscribeCustomIcons(fn: () => void) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+function setCustomIcons(next: IconEntry[]) {
+  customIcons = next;
+  for (const fn of listeners) fn();
+}
+
+export function resolveIconSrc(name: string | null | undefined) {
+  const key = name ?? "";
+  return (
+    BUILTIN_ICONS.find((i) => i.key === key)?.src ??
+    customIcons.find((i) => i.key === key)?.src ??
+    FALLBACK_ICON
+  );
+}
+
+export function allIcons(): IconEntry[] {
+  return [...BUILTIN_ICONS, ...customIcons];
+}
+
+export function iconLabel(name: string | null | undefined) {
+  const key = name ?? "";
+  return allIcons().find((i) => i.key === key)?.label ?? key;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const db = supabase as any;
+
+export async function fetchCustomIcons(): Promise<IconEntry[]> {
+  const { data, error } = await db
+    .from("custom_icons")
+    .select("key,label,category,url")
+    .order("created_at");
+  if (error) throw new Error(error.message);
+  const list: IconEntry[] = (data ?? []).map((r: any) => ({
+    key: r.key as string,
+    label: r.label as string,
+    category: r.category as IconCategory,
+    src: r.url as string,
+    custom: true,
+  }));
+  setCustomIcons(list);
+  return list;
+}
+
+export async function createCustomIcon(input: {
+  label: string;
+  category: IconCategory;
+  dataUrl: string;
+}) {
+  const key = `custom_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const { error } = await db.from("custom_icons").insert({
+    key,
+    label: input.label.slice(0, 40),
+    category: input.category,
+    url: input.dataUrl,
+  });
+  if (error) throw new Error(error.message);
+  return key;
+}
+
+export async function deleteCustomIcon(key: string) {
+  const { error } = await db.from("custom_icons").delete().eq("key", key);
+  if (error) throw new Error(error.message);
+}
+
+/** Standard icon canvas: square, centre-cropped, no stretching. */
+export const ICON_SIZE = 256;
+
+export async function normalizeIconFile(file: File): Promise<string> {
+  const bitmapUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("Não foi possível ler esta imagem."));
+      el.src = bitmapUrl;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = ICON_SIZE;
+    canvas.height = ICON_SIZE;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Não foi possível processar a imagem.");
+    ctx.imageSmoothingQuality = "high";
+    // Centre crop the largest square of the source, keeping the proportion.
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    const sx = (img.naturalWidth - side) / 2;
+    const sy = (img.naturalHeight - side) / 2;
+    ctx.drawImage(img, sx, sy, side, side, 0, 0, ICON_SIZE, ICON_SIZE);
+    const dataUrl = canvas.toDataURL("image/webp", 0.9);
+    return dataUrl.startsWith("data:image/webp") ? dataUrl : canvas.toDataURL("image/png");
+  } finally {
+    URL.revokeObjectURL(bitmapUrl);
+  }
+}
