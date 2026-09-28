@@ -61,7 +61,7 @@ export function IconPicker({
   const fileRef = useRef<HTMLInputElement>(null);
 
   const shelf = useMemo(() => icons.filter((i) => i.category === tab), [icons, tab]);
-  const customIcons = useMemo(() => icons.filter((icon) => icon.custom), [icons]);
+  const managedIcons = icons;
 
   async function importIcon() {
     const file = fileRef.current?.files?.[0];
