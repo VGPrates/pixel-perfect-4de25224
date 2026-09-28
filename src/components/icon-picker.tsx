@@ -224,14 +224,14 @@ export function IconPicker({
         <DialogContent className="max-h-[85dvh] overflow-y-auto border-border bg-surface text-fg">
           <DialogHeader>
             <DialogTitle className="font-display">Gerenciar ícones</DialogTitle>
-            <DialogDescription className="text-muted">Exclua os ícones importados que não deseja mais usar.</DialogDescription>
+            <DialogDescription className="text-muted">Exclua os ícones que não deseja mais usar, importados ou originais.</DialogDescription>
           </DialogHeader>
-          {customIcons.length === 0 ? (
-            <p className="rounded-md bg-bg/40 px-3 py-6 text-center text-sm text-subtle">Nenhum ícone importado.</p>
+          {managedIcons.length === 0 ? (
+            <p className="rounded-md bg-bg/40 px-3 py-6 text-center text-sm text-subtle">Nenhum ícone disponível.</p>
           ) : (
             <div className="grid gap-4">
               {ICON_CATEGORIES.map((iconCategory) => {
-                const items = customIcons.filter((icon) => icon.category === iconCategory.key);
+                const items = managedIcons.filter((icon) => icon.category === iconCategory.key);
                 if (items.length === 0) return null;
                 return (
                   <section key={iconCategory.key} className="grid gap-2">
