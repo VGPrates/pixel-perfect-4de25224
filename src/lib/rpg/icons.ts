@@ -199,8 +199,9 @@ export async function deleteCustomIcon(key: string) {
   }
 }
 
-/** Standard icon canvas: square, centre-cropped, no stretching. */
+/** Standard icon canvas: square, centered, with the same visual breathing room as built-ins. */
 export const ICON_SIZE = 256;
+const ICON_CONTENT_SIZE = 224;
 
 export async function normalizeIconFile(file: File): Promise<string> {
   const bitmapUrl = URL.createObjectURL(file);
@@ -211,17 +212,58 @@ export async function normalizeIconFile(file: File): Promise<string> {
       el.onerror = () => reject(new Error("Não foi possível ler esta imagem."));
       el.src = bitmapUrl;
     });
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = img.naturalWidth;
+    sourceCanvas.height = img.naturalHeight;
+    const sourceCtx = sourceCanvas.getContext("2d", { willReadFrequently: true });
+    if (!sourceCtx) throw new Error("Não foi possível processar a imagem.");
+    sourceCtx.drawImage(img, 0, 0);
+
+    // Trim transparent margins first, then fit the visible art into a padded
+    // square. Opaque photos keep their full frame. Neither path distorts it.
+    const pixels = sourceCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height).data;
+    let left = sourceCanvas.width;
+    let top = sourceCanvas.height;
+    let right = -1;
+    let bottom = -1;
+    for (let y = 0; y < sourceCanvas.height; y += 1) {
+      for (let x = 0; x < sourceCanvas.width; x += 1) {
+        if (pixels[(y * sourceCanvas.width + x) * 4 + 3] > 12) {
+          left = Math.min(left, x);
+          top = Math.min(top, y);
+          right = Math.max(right, x);
+          bottom = Math.max(bottom, y);
+        }
+      }
+    }
+    if (right < left || bottom < top) throw new Error("A imagem está vazia.");
+
+    const sourceWidth = right - left + 1;
+    const sourceHeight = bottom - top + 1;
+    const scale = Math.min(ICON_CONTENT_SIZE / sourceWidth, ICON_CONTENT_SIZE / sourceHeight);
+    const drawWidth = sourceWidth * scale;
+    const drawHeight = sourceHeight * scale;
+    const drawX = (ICON_SIZE - drawWidth) / 2;
+    const drawY = (ICON_SIZE - drawHeight) / 2;
+
     const canvas = document.createElement("canvas");
     canvas.width = ICON_SIZE;
     canvas.height = ICON_SIZE;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Não foi possível processar a imagem.");
+    ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    // Centre crop the largest square of the source, keeping the proportion.
-    const side = Math.min(img.naturalWidth, img.naturalHeight);
-    const sx = (img.naturalWidth - side) / 2;
-    const sy = (img.naturalHeight - side) / 2;
-    ctx.drawImage(img, sx, sy, side, side, 0, 0, ICON_SIZE, ICON_SIZE);
+    ctx.drawImage(
+      sourceCanvas,
+      left,
+      top,
+      sourceWidth,
+      sourceHeight,
+      drawX,
+      drawY,
+      drawWidth,
+      drawHeight,
+    );
     const dataUrl = canvas.toDataURL("image/webp", 0.76);
     return dataUrl.startsWith("data:image/webp") ? dataUrl : canvas.toDataURL("image/png");
   } finally {
