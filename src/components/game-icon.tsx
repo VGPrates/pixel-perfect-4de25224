@@ -1,4 +1,4 @@
-import { useSyncExternalStore, type ImgHTMLAttributes } from "react";
+import { useEffect, useState, useSyncExternalStore, type ImgHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 import {
   BUILTIN_ICONS,
@@ -35,6 +35,14 @@ export function useIconRegistry() {
   return allIcons();
 }
 
+function useIconSrc(name: string | null | undefined) {
+  return useSyncExternalStore(
+    subscribeCustomIcons,
+    () => resolveIconSrc(name),
+    () => resolveIconSrc(name),
+  );
+}
+
 type Props = Omit<ImgHTMLAttributes<HTMLImageElement>, "name" | "src" | "alt"> & {
   name: string | null | undefined;
   className?: string;
@@ -46,18 +54,29 @@ type Props = Omit<ImgHTMLAttributes<HTMLImageElement>, "name" | "src" | "alt"> &
 };
 
 export function GameIcon({ name, className, title, rarity, muted, ...rest }: Props) {
-  useIconRegistry();
-  const src = resolveIconSrc(name);
+  const src = useIconSrc(name);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const loaded = loadedSrc === src;
+
+  useEffect(() => {
+    const image = new Image();
+    image.src = src;
+    if (image.complete) setLoadedSrc(src);
+  }, [src]);
+
   return (
     <img
       src={src}
       alt={title ?? ""}
       title={title}
-      loading="lazy"
+      loading="eager"
+      decoding="async"
+      onLoad={() => setLoadedSrc(src)}
       draggable={false}
       data-game-icon=""
       className={cn(
         "fantasy-icon size-7 shrink-0 object-contain select-none",
+        loaded ? "fantasy-icon--loaded" : "fantasy-icon--loading",
         rarity ? `fantasy-icon--${rarity}` : null,
         muted ? "fantasy-icon--muted" : null,
         className,
