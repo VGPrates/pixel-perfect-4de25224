@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Loader2, Trash2, Upload } from "lucide-react";
+import { Loader2, Settings2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { GameIcon, useIconRegistry } from "@/components/game-icon";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ICON_CATEGORIES,
   ICON_CATEGORY_LABEL,
   createCustomIcon,
   deleteCustomIcon,
-  fetchCustomIcons,
   normalizeIconFile,
   type IconCategory,
 } from "@/lib/rpg/icons";
@@ -36,12 +52,16 @@ export function IconPicker({
   const icons = useIconRegistry();
   const [tab, setTab] = useState<IconCategory>(defaultCategory);
   const [importing, setImporting] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [importBusy, setImportBusy] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ key: string; label: string } | null>(null);
   const [label, setLabel] = useState("");
   const [category, setCategory] = useState<IconCategory>(defaultCategory);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const shelf = useMemo(() => icons.filter((i) => i.category === tab), [icons, tab]);
+  const customIcons = useMemo(() => icons.filter((icon) => icon.custom), [icons]);
 
   async function importIcon() {
     const file = fileRef.current?.files?.[0];
@@ -53,11 +73,10 @@ export function IconPicker({
       toast.error("Dê um nome ao ícone.");
       return;
     }
-    setBusy(true);
+    setImportBusy(true);
     try {
       const dataUrl = await normalizeIconFile(file);
       const key = await createCustomIcon({ label: label.trim(), category, dataUrl });
-      await fetchCustomIcons();
       setTab(category);
       onChange(key);
       setLabel("");
@@ -67,20 +86,21 @@ export function IconPicker({
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Falha ao importar o ícone.");
     } finally {
-      setBusy(false);
+      setImportBusy(false);
     }
   }
 
   async function removeIcon(key: string) {
-    setBusy(true);
+    setDeletingKey(key);
     try {
       await deleteCustomIcon(key);
-      await fetchCustomIcons();
+      if (value === key) onChange(defaultCategory === "equipment" ? "sword" : defaultCategory === "effect" ? "sparkles" : "blood");
+      setPendingDelete(null);
       toast.success("Ícone removido.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Falha ao remover o ícone.");
     } finally {
-      setBusy(false);
+      setDeletingKey(null);
     }
   }
 
@@ -89,14 +109,16 @@ export function IconPicker({
       <div className="flex items-center justify-between gap-2">
         <Label>Ícone</Label>
         {canImport ? (
-          <button
-            type="button"
-            onClick={() => setImporting((v) => !v)}
-            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted hover:bg-surface hover:text-fg"
-          >
-            <Upload className="size-3.5" />
-            Importar ícone
-          </button>
+          <div className="flex items-center gap-1">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setManageOpen(true)}>
+              <Settings2 className="size-3.5" />
+              Gerenciar ícones
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setImporting((v) => !v)}>
+              <Upload className="size-3.5" />
+              Importar
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -143,17 +165,6 @@ export function IconPicker({
                 >
                   <GameIcon name={i.key} className="size-8" />
                 </button>
-                {i.custom && canImport ? (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void removeIcon(i.key)}
-                    aria-label={`Excluir ícone ${i.label}`}
-                    className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-elevated text-muted shadow-border hover:text-hp-bright"
-                  >
-                    <Trash2 className="size-3" />
-                  </button>
-                ) : null}
               </span>
             );
           })}
@@ -198,16 +209,86 @@ export function IconPicker({
             className="text-xs text-muted file:mr-3 file:rounded-md file:border-0 file:bg-elevated file:px-3 file:py-2 file:text-xs file:text-fg"
           />
           <div className="flex gap-2">
-            <Button type="button" onClick={() => void importIcon()} disabled={busy}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+            <Button type="button" onClick={() => void importIcon()} disabled={importBusy}>
+              {importBusy ? <Loader2 className="size-4 animate-spin" /> : null}
               Importar
             </Button>
-            <Button type="button" variant="ghost" onClick={() => setImporting(false)} disabled={busy}>
+            <Button type="button" variant="ghost" onClick={() => setImporting(false)} disabled={importBusy}>
               Cancelar
             </Button>
           </div>
         </div>
       ) : null}
+
+      <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto border-border bg-surface text-fg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Gerenciar ícones</DialogTitle>
+            <DialogDescription className="text-muted">Exclua os ícones importados que não deseja mais usar.</DialogDescription>
+          </DialogHeader>
+          {customIcons.length === 0 ? (
+            <p className="rounded-md bg-bg/40 px-3 py-6 text-center text-sm text-subtle">Nenhum ícone importado.</p>
+          ) : (
+            <div className="grid gap-4">
+              {ICON_CATEGORIES.map((iconCategory) => {
+                const items = customIcons.filter((icon) => icon.category === iconCategory.key);
+                if (items.length === 0) return null;
+                return (
+                  <section key={iconCategory.key} className="grid gap-2">
+                    <h3 className="text-xs tracking-[0.14em] text-subtle uppercase">{iconCategory.label}</h3>
+                    <ul className="grid gap-1.5">
+                      {items.map((icon) => (
+                        <li key={icon.key} className="flex min-h-14 items-center gap-3 rounded-md bg-bg/40 px-2.5 py-2 shadow-border">
+                          <span className="grid size-10 shrink-0 place-items-center rounded-md bg-elevated">
+                            <GameIcon name={icon.key} className="size-8" />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm">{icon.label}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={deletingKey === icon.key}
+                            onClick={() => setPendingDelete({ key: icon.key, label: icon.label })}
+                            className="text-muted hover:text-hp-bright"
+                          >
+                            {deletingKey === icon.key ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                            Excluir
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => { if (!open && !deletingKey) setPendingDelete(null); }}>
+        <AlertDialogContent className="border-border bg-surface text-fg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Excluir {pendingDelete?.label}?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted">
+              Este ícone deixará de aparecer na seleção. Itens que já o utilizam mostrarão o ícone padrão.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingKey !== null}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!pendingDelete || deletingKey !== null}
+              onClick={(event) => {
+                event.preventDefault();
+                if (pendingDelete) void removeIcon(pendingDelete.key);
+              }}
+              className="bg-hp text-fg hover:bg-hp/90"
+            >
+              {deletingKey ? <Loader2 className="animate-spin" /> : <Trash2 />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

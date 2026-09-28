@@ -85,9 +85,12 @@ export const BUILTIN_ICONS: IconEntry[] = [
 
 export const FALLBACK_ICON = sparkles;
 
+const builtinIconByKey = new Map(BUILTIN_ICONS.map((icon) => [icon.key, icon]));
+
 /* ---------- custom icons imported by the GM ---------- */
 
 let customIcons: IconEntry[] = [];
+let customIconByKey = new Map<string, IconEntry>();
 const listeners = new Set<() => void>();
 
 export function getCustomIcons() {
@@ -101,16 +104,13 @@ export function subscribeCustomIcons(fn: () => void) {
 
 function setCustomIcons(next: IconEntry[]) {
   customIcons = next;
+  customIconByKey = new Map(next.map((icon) => [icon.key, icon]));
   for (const fn of listeners) fn();
 }
 
 export function resolveIconSrc(name: string | null | undefined) {
   const key = name ?? "";
-  return (
-    BUILTIN_ICONS.find((i) => i.key === key)?.src ??
-    customIcons.find((i) => i.key === key)?.src ??
-    FALLBACK_ICON
-  );
+  return builtinIconByKey.get(key)?.src ?? customIconByKey.get(key)?.src ?? FALLBACK_ICON;
 }
 
 export function allIcons(): IconEntry[] {
@@ -119,7 +119,7 @@ export function allIcons(): IconEntry[] {
 
 export function iconLabel(name: string | null | undefined) {
   const key = name ?? "";
-  return allIcons().find((i) => i.key === key)?.label ?? key;
+  return builtinIconByKey.get(key)?.label ?? customIconByKey.get(key)?.label ?? key;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -155,12 +155,21 @@ export async function createCustomIcon(input: {
     url: input.dataUrl,
   });
   if (error) throw new Error(error.message);
+  setCustomIcons([
+    ...customIcons,
+    { key, label: input.label.slice(0, 40), category: input.category, src: input.dataUrl, custom: true },
+  ]);
   return key;
 }
 
 export async function deleteCustomIcon(key: string) {
+  const previous = customIcons;
+  setCustomIcons(customIcons.filter((icon) => icon.key !== key));
   const { error } = await db.from("custom_icons").delete().eq("key", key);
-  if (error) throw new Error(error.message);
+  if (error) {
+    setCustomIcons(previous);
+    throw new Error(error.message);
+  }
 }
 
 /** Standard icon canvas: square, centre-cropped, no stretching. */
@@ -186,7 +195,7 @@ export async function normalizeIconFile(file: File): Promise<string> {
     const sx = (img.naturalWidth - side) / 2;
     const sy = (img.naturalHeight - side) / 2;
     ctx.drawImage(img, sx, sy, side, side, 0, 0, ICON_SIZE, ICON_SIZE);
-    const dataUrl = canvas.toDataURL("image/webp", 0.9);
+    const dataUrl = canvas.toDataURL("image/webp", 0.76);
     return dataUrl.startsWith("data:image/webp") ? dataUrl : canvas.toDataURL("image/png");
   } finally {
     URL.revokeObjectURL(bitmapUrl);

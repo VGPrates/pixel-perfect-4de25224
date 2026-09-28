@@ -347,7 +347,18 @@
 }
 .fantasy-icon {
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.55));
-  transition: filter 150ms ease, transform 150ms ease;
+  transition: filter 150ms ease, transform 150ms ease, opacity 140ms ease;
+}
+.fantasy-icon--loading {
+  opacity: 0.18;
+  animation: icon-loading 900ms ease-in-out infinite alternate;
+}
+.fantasy-icon--loaded {
+  opacity: 1;
+}
+@keyframes icon-loading {
+  from { opacity: 0.12; filter: grayscale(1) brightness(0.65); }
+  to { opacity: 0.38; filter: grayscale(0.6) brightness(0.9); }
 }
 .group:hover .fantasy-icon,
 button:hover > .fantasy-icon,
@@ -387,7 +398,8 @@ button:hover > .fantasy-icon,
 }
 @media (prefers-reduced-motion: reduce) {
   .value-stepper__value.is-changing,
-  .value-stepper__delta { animation: none; }
+  .value-stepper__delta,
+  .fantasy-icon--loading { animation: none; }
 }
 
 /* ── Aura dos equipamentos lendários ───────────────────────────────────────
