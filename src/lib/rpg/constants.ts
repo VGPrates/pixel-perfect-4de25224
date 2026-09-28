@@ -41,7 +41,7 @@ export const STATS: { key: StatKey; label: string; short: string; hint: string }
 
 export const BODY_SLOTS: { key: BodySlot; label: string; icon: string }[] = [
   { key: "cabeca", label: "Cabeça", icon: "helmet" },
-  { key: "acessorio", label: "Acessório", icon: "amulet" },
+  { key: "acessorio", label: "Acessório", icon: "ring" },
   { key: "torso", label: "Corpo", icon: "armor" },
   { key: "mao_direita", label: "Mão direita", icon: "sword" },
   { key: "mao_esquerda", label: "Mão esquerda", icon: "shield" },

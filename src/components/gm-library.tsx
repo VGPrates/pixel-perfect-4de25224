@@ -48,34 +48,13 @@ function ModifierFields({ initial }: { initial?: Modifiers | undefined }) {
   );
 }
 
-const ICONS = GAME_ICON_NAMES;
-
-function IconField({ initial }: { initial: string }) {
-  const [v, setV] = useState(ICONS.includes(initial as never) ? initial : "sword");
+function IconField({ initial, category }: { initial: string; category: IconCategory }) {
+  const [v, setV] = useState(initial || "sword");
   return (
-    <div className="grid gap-1.5">
-      <Label>Ícone</Label>
+    <>
       <input type="hidden" name="icon" value={v} />
-      <div className="flex items-center gap-2">
-        <span className="grid size-14 shrink-0 place-items-center rounded-md bg-bg/50 text-fg">
-          <GameIcon name={v} className="size-11" />
-        </span>
-        <div className="flex flex-1 flex-wrap gap-1">
-          {ICONS.map((i) => (
-            <button
-              key={i}
-              type="button"
-              title={GAME_ICON_LABEL[i] ?? i}
-              aria-label={GAME_ICON_LABEL[i] ?? i}
-              onClick={() => setV(i)}
-              className={cn("grid size-10 place-items-center rounded-md text-muted hover:bg-surface hover:text-fg", v === i && "bg-surface text-fg ring-1 ring-ring/50")}
-            >
-              <GameIcon name={i} className="size-8" />
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
+      <IconPicker value={v} onChange={setV} defaultCategory={category} />
+    </>
   );
 }
 
