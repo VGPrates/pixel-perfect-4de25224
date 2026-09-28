@@ -91,6 +91,7 @@ const builtinIconByKey = new Map(BUILTIN_ICONS.map((icon) => [icon.key, icon]));
 
 let customIcons: IconEntry[] = [];
 let customIconByKey = new Map<string, IconEntry>();
+let hiddenBuiltinKeys = new Set<string>();
 const listeners = new Set<() => void>();
 
 export function getCustomIcons() {
@@ -102,19 +103,33 @@ export function subscribeCustomIcons(fn: () => void) {
   return () => listeners.delete(fn);
 }
 
+function notify() {
+  for (const fn of listeners) fn();
+}
+
 function setCustomIcons(next: IconEntry[]) {
   customIcons = next;
   customIconByKey = new Map(next.map((icon) => [icon.key, icon]));
-  for (const fn of listeners) fn();
+  notify();
+}
+
+function setHiddenBuiltinKeys(next: Set<string>) {
+  hiddenBuiltinKeys = next;
+  notify();
+}
+
+export function isBuiltinIcon(key: string) {
+  return builtinIconByKey.has(key);
 }
 
 export function resolveIconSrc(name: string | null | undefined) {
   const key = name ?? "";
+  if (hiddenBuiltinKeys.has(key)) return FALLBACK_ICON;
   return builtinIconByKey.get(key)?.src ?? customIconByKey.get(key)?.src ?? FALLBACK_ICON;
 }
 
 export function allIcons(): IconEntry[] {
-  return [...BUILTIN_ICONS, ...customIcons];
+  return [...BUILTIN_ICONS.filter((icon) => !hiddenBuiltinKeys.has(icon.key)), ...customIcons];
 }
 
 export function iconLabel(name: string | null | undefined) {
@@ -126,11 +141,13 @@ export function iconLabel(name: string | null | undefined) {
 const db = supabase as any;
 
 export async function fetchCustomIcons(): Promise<IconEntry[]> {
-  const { data, error } = await db
-    .from("custom_icons")
-    .select("key,label,category,url")
-    .order("created_at");
+  const [{ data, error }, { data: hidden, error: hiddenError }] = await Promise.all([
+    db.from("custom_icons").select("key,label,category,url").order("created_at"),
+    db.from("hidden_icons").select("key"),
+  ]);
   if (error) throw new Error(error.message);
+  if (hiddenError) throw new Error(hiddenError.message);
+  setHiddenBuiltinKeys(new Set((hidden ?? []).map((r: any) => r.key as string)));
   const list: IconEntry[] = (data ?? []).map((r: any) => ({
     key: r.key as string,
     label: r.label as string,
@@ -163,6 +180,16 @@ export async function createCustomIcon(input: {
 }
 
 export async function deleteCustomIcon(key: string) {
+  if (builtinIconByKey.has(key)) {
+    const previous = hiddenBuiltinKeys;
+    setHiddenBuiltinKeys(new Set([...hiddenBuiltinKeys, key]));
+    const { error } = await db.from("hidden_icons").insert({ key });
+    if (error) {
+      setHiddenBuiltinKeys(previous);
+      throw new Error(error.message);
+    }
+    return;
+  }
   const previous = customIcons;
   setCustomIcons(customIcons.filter((icon) => icon.key !== key));
   const { error } = await db.from("custom_icons").delete().eq("key", key);
