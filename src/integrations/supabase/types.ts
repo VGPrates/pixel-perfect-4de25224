@@ -340,6 +340,21 @@ export type Database = {
         }
         Relationships: []
       }
+      hidden_icons: {
+        Row: {
+          created_at: string
+          key: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           character_id: number
