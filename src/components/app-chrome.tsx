@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { APP_NAME } from "@/lib/rpg/constants";
-import { useTableSync } from "@/lib/rpg/hooks";
+import { useCustomIcons, useTableSync } from "@/lib/rpg/hooks";
 import { cn } from "@/lib/utils";
 import { AvatarEditor } from "@/components/avatar-editor";
 import { AppearanceSettings } from "@/components/appearance-settings";
@@ -19,6 +19,7 @@ export function AppChrome({
   profile?: Profile;
 }) {
   useTableSync();
+  useCustomIcons();
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-20 border-b border-border bg-bg/90 backdrop-blur-sm">

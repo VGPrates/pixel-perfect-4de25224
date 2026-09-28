@@ -58,6 +58,9 @@ export function useTableSync() {
     for (const table of ["equipment", "effects", "conditions"]) {
       channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh("lib"));
     }
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "custom_icons" }, () => {
+      void qc.invalidateQueries({ queryKey: ["custom-icons"] });
+    });
     channel.subscribe();
     return () => {
       window.clearTimeout(t);
